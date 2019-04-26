@@ -16,6 +16,7 @@
 
 
 from itertools import groupby
+import numpy as np
 
 def reverse_complement(sequence):
     table = sequence.maketrans('ACGT', 'TGCA')
@@ -133,12 +134,20 @@ def check_no_of_sequences(file):
 
 
 """
-jeśli znajdziesz juz sekwencje niekodujace to przekaz je do paddingowania (jeszcze wczesniej do bucketowania, ale to zaimplementuje pozniej.)
+sekwencje przed paddowaniem, najpierw trzeba one-hot encodowac, zeby bylo co padowac, bo tak to padowac string to
 """
 
-def padding(header, sequence):
-    padded_sequence = print(str(header) + ' chuj ci tam')
-    return padded_sequence
+def one_hot(sequence):
+    A = np.array(0,0,0,1)
+    G = np.array(0,0.1,0)
+    C = np.array(0,1,0,0)
+    T = np.array(1,0,0,0)
+
+    for nucleotide in sequnce:
+        if nucleotide = 'A':
+            one_hot_sequence.append() # nie do konca, bo to bedzie np array. dowiedziec sie jak modyfikowac np.array'e
+
+    return
 
 if __name__ == "__main__":
     examined_file = 'gfap.fasta'
@@ -153,6 +162,6 @@ if __name__ == "__main__":
         decision = decide(orf_len)
 
         if decision == 'coding':
-            padded_sequence = padding(header, sequence)
+            one_hot_sequence = one_hot(sequence)
             
 
