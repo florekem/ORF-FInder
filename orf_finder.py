@@ -134,17 +134,40 @@ def check_no_of_sequences(file):
 
 
 """
-sekwencje przed paddowaniem, najpierw trzeba one-hot encodowac, zeby bylo co padowac, bo tak to padowac string to
+[] znalezc najdluzsza sekwencje
+    [] tu ma sens bucketowanie, zeby sekwencji 400nt nie paddowac do 8000
+    [] sekwencje aktualnie leca on the fly do funkcji one_hot
+    [] najpierw zrobic listy/slowniki z dlugosciami
+        [?] automatycznie ustalanie przedzialow
+        [x] on the fly pakowanie w listy/slowniki sekwencji, ktore mieszcza sie w z gory zalozych widelkach
+        [x] krotszych sekwencji jest zawsze wiecej niz dluzszych, przedzialy w krotszych sekwencjach powinny byc czestsze niz w dluzszych
+        [] co sie stanie jesli do slownikow dodawane beda tylko headery sekwencji, nie same sekwencje -> to ma przyszlosc
+            
+[] stworzyc np.array zeros o dlugosci najdluzszej sekwencji
+[] zastepowac zera od lewej do prawej 5`->3` odpowiednimi wektorami
+[] automatycznie pozostale 0 w array zeros beda rownac sie do najdluzszej sekwenji (post-padding)
+[] jesli chcialbym zrobic pre-padowanie 
 """
 
-def one_hot(sequence):
+def bucketing(header, sequence):
+    buckets = {500: [], 700: [], 900: [], 1200: [], 1500: [], 1800: [], 2500: [], 3500: [], 5000: [], 8000: [], 20000: []}
+
+    for bucket in buckets:
+        if len(sequence) < bucket:
+            buckets[bucket].append(header)
+            break  # zapobiega dodaniu do wiecej niz jednego bucketa
+
+    return buckets
+
+def one_hot(header, sequence):
+    pass
     A = np.array(0,0,0,1)
     G = np.array(0,0.1,0)
     C = np.array(0,1,0,0)
     T = np.array(1,0,0,0)
 
     for nucleotide in sequnce:
-        if nucleotide = 'A':
+        if nucleotide == 'A':
             one_hot_sequence.append() # nie do konca, bo to bedzie np array. dowiedziec sie jak modyfikowac np.array'e
 
     return
@@ -162,6 +185,7 @@ if __name__ == "__main__":
         decision = decide(orf_len)
 
         if decision == 'coding':
-            one_hot_sequence = one_hot(sequence)
+            buckets = bucketing(header, sequence)
+            print(buckets)
             
 
