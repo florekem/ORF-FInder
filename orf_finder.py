@@ -110,14 +110,17 @@ def decide(orf_len):
     """
     
     if not orf_len:    #jesli lista jest pusta
-        decision = print(header[1:] + ' non-coding')
+        decision = 'noncoding'        
     else:
         if max(orf_len) < 200 or not orf_len:
-            decision = print(header[1:] + ' non-coding')
+            decision = 'noncoding'
         else:
-            decision = print(header[1:] + ' coding')
+            decision = 'coding'
 
-    return decision
+    if decision == 'coding':  # TYMCZASOWO, ma byc NONCODING
+        return decision  # moge je tu zwracac, bo te zmienne istnieja w loopie w __main__
+    else:
+        pass
 
 def check_no_of_sequences(file):
     sequences_count = 0
@@ -128,6 +131,15 @@ def check_no_of_sequences(file):
             sequences_count += 1
     return sequences_count
 
+
+"""
+jeśli znajdziesz juz sekwencje niekodujace to przekaz je do paddingowania (jeszcze wczesniej do bucketowania, ale to zaimplementuje pozniej.)
+"""
+
+def padding(header, sequence):
+    padded_sequence = print(str(header) + ' chuj ci tam')
+    return padded_sequence
+
 if __name__ == "__main__":
     examined_file = 'gfap.fasta'
     faiter_output = faiter(examined_file)
@@ -135,10 +147,12 @@ if __name__ == "__main__":
     print(no_of_sequences)
 
     for i in range(no_of_sequences):
-        
-
         header, sequence = single_sequence(faiter_output)
         framed_sequence = choose_frame(sequence)
         orf_len = find_orfs(framed_sequence)
         decision = decide(orf_len)
+
+        if decision == 'coding':
+            padded_sequence = padding(header, sequence)
+            
 
