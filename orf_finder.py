@@ -174,14 +174,18 @@ def one_hot_in_buckets(header, sequence):
                 for nuc_name, nuc_value in nucleotides.items():
                     if nucleotide == nuc_name:
                         one_hot_sequence = np.append(one_hot_sequence, nuc_value, axis=0)
+                        # one_hot_sequence = np.delete(one_hot_sequence, 0, 0)
+                        
             break 
 
     if one_hot_sequence.shape[0] != bucket:  # post-padding with 0
-        for _ in range(bucket - one_hot_sequence.shape[0] + 1):
+        for _ in range(bucket - one_hot_sequence.shape[0]):
             one_hot_sequence = np.append(one_hot_sequence, np.zeros((1,4)), axis=0) 
         
     print(one_hot_sequence.shape)
     print(one_hot_sequence.T)
+
+    # np.savetxt(str(bucket), one_hot_sequence.T, fmt='%.0f')
 
     return one_hot_sequence
 
@@ -200,8 +204,3 @@ if __name__ == "__main__":
 
         if decision == 'coding':            
             one_hot_encode = one_hot_in_buckets(header, sequence)
-
-    
-    
-            
-
