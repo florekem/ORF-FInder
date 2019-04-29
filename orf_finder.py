@@ -18,6 +18,9 @@
 from itertools import groupby
 import numpy as np
 
+# buckets = {500: [], 700: [], 900: [], 1200: [], 1500: [], 1800: [], 2500: [], 3500: [], 5000: [], 8000: [], 20000: []}
+
+
 def reverse_complement(sequence):
     table = sequence.maketrans('ACGT', 'TGCA')
     
@@ -135,48 +138,59 @@ def check_no_of_sequences(file):
 
 """
 [] znalezc najdluzsza sekwencje
-    [] tu ma sens bucketowanie, zeby sekwencji 400nt nie paddowac do 8000
+    [x] tu ma sens bucketowanie, zeby sekwencji 400nt nie paddowac do 8000
     [] sekwencje aktualnie leca on the fly do funkcji one_hot
-    [] najpierw zrobic listy/slowniki z dlugosciami
+    [x] najpierw zrobic listy/slowniki z dlugosciami
         [?] automatycznie ustalanie przedzialow
         [x] on the fly pakowanie w listy/slowniki sekwencji, ktore mieszcza sie w z gory zalozych widelkach
         [x] krotszych sekwencji jest zawsze wiecej niz dluzszych, przedzialy w krotszych sekwencjach powinny byc czestsze niz w dluzszych
         [] co sie stanie jesli do slownikow dodawane beda tylko headery sekwencji, nie same sekwencje -> to ma przyszlosc
-            
-[] stworzyc np.array zeros o dlugosci najdluzszej sekwencji
+    [x] zwracanie tylko jednego slownika, teraz kazdy loop tworzy swoj wlasny slownik
+        [x] dac slownik do global (poza funkcja), to chyba jedyne rozwiązanie?    
+[] stworzyc np.array zeros o dlugosci danego bucketa 
 [] zastepowac zera od lewej do prawej 5`->3` odpowiednimi wektorami
 [] automatycznie pozostale 0 w array zeros beda rownac sie do najdluzszej sekwenji (post-padding)
-[] jesli chcialbym zrobic pre-padowanie 
+[] jesli chcialbym zrobic pre-padowanie
+[] funkcje encode/decode dla one-hot. albo if=encode/decode w argumentach funcji one-hot
 """
 
-def bucketing(header, sequence):
-    buckets = {500: [], 700: [], 900: [], 1200: [], 1500: [], 1800: [], 2500: [], 3500: [], 5000: [], 8000: [], 20000: []}
-
+def one_hot_in_buckets(header, sequence):
+    """
+    'break' w loopie zapobiega dodaniu do wiecej niz jednego bucketa
+    """
+    buckets = (500, 700, 900, 1200, 1500, 1800, 2500, 3500, 5000, 8000, 20000)
+    nucleotides = {
+        'A': np.array([[0,0,0,1]]),
+        'G': np.array([[0,0,1,0]]),
+        'C': np.array([[0,1,0,0]]),
+        'T': np.array([[1,0,0,0]])
+        }  
+    one_hot_sequence = np.zeros((1,4))
+   
     for bucket in buckets:
         if len(sequence) < bucket:
-            buckets[bucket].append(header)
-            break  # zapobiega dodaniu do wiecej niz jednego bucketa
+            print(bucket)
+            for nucleotide in sequence:
+                for nuc_name, nuc_value in nucleotides.items():
+                    if nucleotide == nuc_name:
+                        one_hot_sequence = np.append(one_hot_sequence, nuc_value, axis=0)
+            break 
 
-    return buckets
+    if one_hot_sequence.shape[0] != bucket:  # post-padding with 0
+        for _ in range(bucket - one_hot_sequence.shape[0] + 1):
+            one_hot_sequence = np.append(one_hot_sequence, np.zeros((1,4)), axis=0) 
+        
+    print(one_hot_sequence.shape)
+    print(one_hot_sequence.T)
 
-def one_hot(header, sequence):
-    pass
-    A = np.array(0,0,0,1)
-    G = np.array(0,0.1,0)
-    C = np.array(0,1,0,0)
-    T = np.array(1,0,0,0)
+    return one_hot_sequence
 
-    for nucleotide in sequnce:
-        if nucleotide == 'A':
-            one_hot_sequence.append() # nie do konca, bo to bedzie np array. dowiedziec sie jak modyfikowac np.array'e
-
-    return
 
 if __name__ == "__main__":
     examined_file = 'gfap.fasta'
     faiter_output = faiter(examined_file)
     no_of_sequences = check_no_of_sequences(examined_file)
-    print(no_of_sequences)
+    # print(no_of_sequences)
 
     for i in range(no_of_sequences):
         header, sequence = single_sequence(faiter_output)
@@ -184,8 +198,10 @@ if __name__ == "__main__":
         orf_len = find_orfs(framed_sequence)
         decision = decide(orf_len)
 
-        if decision == 'coding':
-            buckets = bucketing(header, sequence)
-            print(buckets)
+        if decision == 'coding':            
+            one_hot_encode = one_hot_in_buckets(header, sequence)
+
+    
+    
             
 
