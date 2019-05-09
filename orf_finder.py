@@ -17,32 +17,33 @@
 
 from itertools import groupby
 import numpy as np
+#import h5py
 
 # buckets = {500: [], 700: [], 900: [], 1200: [], 1500: [], 1800: [], 2500: [], 3500: [], 5000: [], 8000: [], 20000: []}
 
 
 def reverse_complement(sequence):
     table = sequence.maketrans('ACGT', 'TGCA')
-    
+
     st1 = sequence.translate(table)  #complement
-    
+
     st1 = st1[::-1]  #reverse complement
-    
+
     return st1
-    
+
 
 def faiter(file):
     """
     funkcja zwraca generator. kazdy loop generatora zawiera header oraz połączoną z poj. linii sekwencję.
     sekwencja grupowana jest do headera za pomocą groupby().
     """
-    
+
     fh = open(file)
-    
-    for group, group_items_iter in groupby(fh, lambda line: line[0] == ">"):       
-        header_seq_joined = "".join(group_items_iter)       
+
+    for group, group_items_iter in groupby(fh, lambda line: line[0] == ">"):
+        header_seq_joined = "".join(group_items_iter)
         yield header_seq_joined
- 
+
 def single_sequence(faiter_output):
     """
     funkcja zwraca pojedyncza sekwencję wraz z jej headerem w oddzielnych zmiennych
@@ -59,22 +60,22 @@ def choose_frame(sequence):
     +1 (normalna, od początku), +2 (z pominieciem pierwszej zasady w sekwencji, +3 (z pominięciem dwóch
     pierwszych zasad) oraz -1,-2,-3 (jak poprzednio, ale na sekwencji reverse complement).
     """
-    
+
     plus_one = sequence
     plus_two = sequence[1:]
     plus_three = sequence[2:]
-        
+
     reverse_compl_sequence = reverse_complement(sequence)
-        
+
     minus_one = reverse_compl_sequence
     minus_two = reverse_compl_sequence[1:]
     minus_three = reverse_compl_sequence[2:]
-        
-        
+
+
     frames_list = [plus_one, plus_two, plus_three, minus_one, minus_two, minus_three]
-        
+
     for select_frame in frames_list:
-        
+
         yield select_frame
 
 def find_orfs(framed_sequence):
@@ -84,15 +85,15 @@ def find_orfs(framed_sequence):
     zawiera dlugosci wszystkich znalezionych orf.
     """
     orf_len = []
-    
+
     # musi byc loop, ktory zbierze wyszystkie sekwencje 
 
     for frame in framed_sequence:
         step = 0
         stop_codons = []
         stop_codon_first_nucl_no = []
-        stop_codon_last_nucl_no = []            
-            
+        stop_codon_last_nucl_no = []
+
         for nucl in range(len(frame)):  #zastapic wydajniejsza licza, dlugosc calej sekwencji jest za duza
             codon = frame[step:3+step]
             step += 3
@@ -100,11 +101,10 @@ def find_orfs(framed_sequence):
                 stop_codons.append(codon)
                 stop_codon_first_nucl_no.append(step-3)
                 stop_codon_last_nucl_no.append(step)
-                    
-        for z in range(len(stop_codon_last_nucl_no) - 1):    
-            orf_len.append(stop_codon_last_nucl_no[1+z] - stop_codon_first_nucl_no[0+z])            
-    
-    
+
+        for z in range(len(stop_codon_last_nucl_no) - 1):
+            orf_len.append(stop_codon_last_nucl_no[1+z] - stop_codon_first_nucl_no[0+z])
+
     return orf_len
     
 def decide(orf_len):
@@ -114,7 +114,7 @@ def decide(orf_len):
     """
     
     if not orf_len:    #jesli lista jest pusta
-        decision = 'noncoding'        
+        decision = 'noncoding'
     else:
         if max(orf_len) < 200 or not orf_len:
             decision = 'noncoding'
@@ -164,9 +164,9 @@ def one_hot_in_buckets(header, sequence):
         'G': np.array([[0,0,1,0]]),
         'C': np.array([[0,1,0,0]]),
         'T': np.array([[1,0,0,0]])
-        }  
+        }
     one_hot_sequence = np.zeros((1,4))
-   
+
     for bucket in buckets:
         if len(sequence) < bucket:
             print(bucket)
@@ -174,23 +174,34 @@ def one_hot_in_buckets(header, sequence):
                 for nuc_name, nuc_value in nucleotides.items():
                     if nucleotide == nuc_name:
                         one_hot_sequence = np.append(one_hot_sequence, nuc_value, axis=0)
-                        # one_hot_sequence = np.delete(one_hot_sequence, 0, 0)
-                        
-            break 
+            break
+
+    one_hot_sequence = np.delete(one_hot_sequence, 0, axis=0)
 
     if one_hot_sequence.shape[0] != bucket:  # post-padding with 0
         for _ in range(bucket - one_hot_sequence.shape[0]):
-            one_hot_sequence = np.append(one_hot_sequence, np.zeros((1,4)), axis=0) 
-        
+            one_hot_sequence = np.append(one_hot_sequence, np.zeros((1,4)), axis=0)
+
     print(one_hot_sequence.shape)
     print(one_hot_sequence.T)
 
     # np.savetxt(str(bucket), one_hot_sequence.T, fmt='%.0f')
 
-    return one_hot_sequence
+    return one_hot_sequence, bucket
+
+
+#def h5py_store_data(header, one_hot_sequece, bucket):
+    # with h5py.File('non_coding_one_hot_sequences.hdf5', 'w') as hf:
+    #     group = hf.create_group(str(bucket))
+    #     add_seq_to_group = group.create_dataset(str(header), data=one_hot_sequece)
+
+
 
 
 if __name__ == "__main__":
+
+    #500 = {}
+
     examined_file = 'gfap.fasta'
     faiter_output = faiter(examined_file)
     no_of_sequences = check_no_of_sequences(examined_file)
@@ -202,5 +213,9 @@ if __name__ == "__main__":
         orf_len = find_orfs(framed_sequence)
         decision = decide(orf_len)
 
-        if decision == 'coding':            
-            one_hot_encode = one_hot_in_buckets(header, sequence)
+        if decision == 'coding':
+            one_hot_sequence, bucket = one_hot_in_buckets(header, sequence)
+
+            #{bucket[header].append(one_hot_sequence) for one_hot_sequence, bucket, header in one_hot_in_buckets(header, sequence)}
+
+            # store_data = h5py_store_data(header, one_hot_sequence, bucket)
