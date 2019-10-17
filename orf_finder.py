@@ -17,7 +17,7 @@
 
 from itertools import groupby
 import numpy as np
-#import h5py
+import h5py
 
 
 
@@ -149,17 +149,13 @@ def one_hot_in_buckets(header, sequence):
                     one_hot_sequence = np.append(one_hot_sequence, np.zeros((1,4)), axis=0)
                 one_hot_sequence = np.delete(one_hot_sequence, 0, axis=0)
     
-            np.savetxt(str(bucket_size), one_hot_sequence.T, fmt='%.0f')
+            #np.savetxt(str(bucket_size), one_hot_sequence.T, fmt='%.0f')
             break #przerwij dopiero jak spelnisz warunek
         #break w tym miejscu przerywalby petle juz po pierwszym loopie
         #czyli niespelnionym warunku 
-   # return bucket_size
+    return (bucket_size, one_hot_sequence)
 
 
-def h5py_store_data(header, one_hot_sequece, bucket):
-    with h5py.File('non_coding_one_hot_sequences.hdf5', 'w') as hf:
-        group = hf.create_group(str(bucket))
-        add_seq_to_group = group.create_dataset(str(header), data=one_hot_sequece)
 
 
 
@@ -178,11 +174,16 @@ if __name__ == "__main__":
         decision = decide(ORF)
 
         if decision == 'coding':
-            one_hot_sequence = one_hot_in_buckets(header, sequence) 
+            bucket_size, one_hot_sequence = one_hot_in_buckets(header, sequence)
+            with h5py.File("sequences.hdf5", "a") as f:
+                dset = f.create_dataset(str(header), data=one_hot_sequence)
 
-            #{bucket[header].append(one_hot_sequence) for one_hot_sequence, bucket, header in one_hot_in_buckets(header, sequence)}
 
-            # store_data = h5py_store_data(header, one_hot_sequence, bucket)
+
+
+
+
+
 
 
 
