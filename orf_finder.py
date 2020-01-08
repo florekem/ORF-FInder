@@ -107,10 +107,9 @@ def decide(orf_len):
         else:
             decision = 'coding'
 
-    if decision == 'coding':  # TYMCZASOWO, ma byc NONCODING
-        return decision  # moge je tu zwracac, bo te zmienne istnieja w loopie w __main__
-    else:
-        pass
+    #if decision == 'coding':  # TYMCZASOWO, ma byc NONCODING >> przeniesione
+    # na dol do main
+    return decision  # moge je tu zwracac, bo te zmienne istnieja w loopie w __main__
 
 def check_no_of_sequences(file):
     sequences_count = 0
@@ -161,11 +160,9 @@ def one_hot_in_buckets(header, sequence):
 
 
 if __name__ == "__main__":
-    #500 = {}
     examined_file = 'gfap.fasta'
     faiter_output = faiter(examined_file)
     no_of_sequences = check_no_of_sequences(examined_file)
-    # print(no_of_sequences)
 
     for i in range(no_of_sequences):
         header, sequence = single_sequence(faiter_output)
